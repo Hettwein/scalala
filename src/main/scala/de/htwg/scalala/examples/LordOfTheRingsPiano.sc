@@ -5,26 +5,13 @@ import scala.language.postfixOps
  
 object LordOfTheRingsPiano {
 
-  val LeftPiano = player(Piano, "LeftPiano654")   //> akka.actor.InvalidActorNameException: actor name [LeftPiano654] is not uniqu
-                                                  //| e!
-                                                  //| 	at akka.actor.dungeon.ChildrenContainer$NormalChildrenContainer.reserve(
-                                                  //| ChildrenContainer.scala:129)
-                                                  //| 	at akka.actor.dungeon.Children$class.reserveChild(Children.scala:130)
-                                                  //| 	at akka.actor.ActorCell.reserveChild(ActorCell.scala:374)
-                                                  //| 	at akka.actor.dungeon.Children$class.makeChild(Children.scala:268)
-                                                  //| 	at akka.actor.dungeon.Children$class.attachChild(Children.scala:46)
-                                                  //| 	at akka.actor.ActorCell.attachChild(ActorCell.scala:374)
-                                                  //| 	at akka.actor.ActorSystemImpl.actorOf(ActorSystem.scala:579)
-                                                  //| 	at akka.actor.TypedActorFactory$$anonfun$typedActorOf$2.apply(TypedActor
-                                                  //| .scala:88)
-                                                  //| 	at akka.actor.TypedActorFactory$$anonfun$typedActorOf$2.apply(TypedActor
-                                                  //| .scala:88)
-                                                  //| 	at akka.actor.TypedActorExtension.createActorRefProxy(TypedActor.scala:6
-                                                  //| 79)
-                                                  //| 	at akka.actor.TypedActorFactory$class.typedActorOf(TypedActor.scala:88)
-                                                  //| 	at akka.actor.TypedActorExtension.ty
-                                                  //| Output exceeds cutoff limit.-
+  val LeftPiano = player(Piano, "LeftPiano")
   val RightPiano  = player(Piano, "RightPiano")
+  Conductor!Add(LeftPiano)
+  Conductor!Add(RightPiano)
+  Conductor!Add (DrumPlayer)
+  Conductor!Start
+  
   var right = Line(d16, e16, fis, a, fis, e8, d2.dot, fis8, a8, Chord(d1, g1, b1), d8, c, a, Chord(a1-, d2, fis2))
 
   var left = Line(d-, a, d, a, d-, a, d, a, g, d, g, d, a)
