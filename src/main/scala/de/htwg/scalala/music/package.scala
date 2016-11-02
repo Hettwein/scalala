@@ -6,7 +6,7 @@ package object music {
 
   def play(musicSeq: Music*): Unit = musicSeq.map(music => music match {
     case elem: MusicElem => Piano.play(elem, volume = Context.volume)
-    case seq: MusicSeq   => seq.map(elem => Piano.play(elem, Context.volume))
+    case seq: MusicSeq => seq.map(elem => Piano.play(elem, Context.volume))
   })
   def choose(music: MusicSeq): Music = {
     val generator = scala.util.Random

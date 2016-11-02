@@ -11,17 +11,17 @@ case class MusicActor(instrument: Instrument) extends Actor {
   var tickList: List[Option[Music]] = List()
 
   def receive = {
-    case Tick               => playNextKey
+    case Tick => playNextKey
     case PlayNow(_tickList) => tickList = _tickList
   }
 
   def playNextKey = {
     if (tickList != Nil) {
       tickList.head match {
-        case None               =>
-        case Some(key: Key)     => playKey(key)
+        case None =>
+        case Some(key: Key) => playKey(key)
         case Some(chord: Chord) => chord.set.foreach(key => playKey(key.copy(ticks = chord.ticks, volume = chord.volume)))
-        case _                  =>
+        case _ =>
       }
       tickList = tickList.tail
     }
@@ -42,5 +42,4 @@ case class MusicPlayerImpl(musicActor: ActorRef) extends MusicPlayer {
   val actor = musicActor
   def play(music: Music): Unit = musicActor ! PlayNow(music.toTickList)
 }
-
 

@@ -11,16 +11,17 @@ case class Key(
     repeat: Int = 1,
     pattern: Pattern = Pattern(1),
     val tied: Int = 0,
-    ticks:Int = 4,
-    volume: Int = Context.volume) extends MusicElem {
+    ticks: Int = 4,
+    volume: Int = Context.volume
+) extends MusicElem {
   require(0 <= midiNumber && midiNumber <= 128)
   require(0 <= volume && volume <= 100)
 
   def play(instrument: Instrument = Piano, volume: Int = volume): Unit = for (i <- 1 to repeat; part <- pattern) {
     instrument.midiPlayer.play(key = midiNumber, duration = duration, volume = volume * part)
   }
-  def toTickList:List[Option[Music]] = {
-      (1 to repeat).toList.flatMap(x=> pattern.flatMap(part=>Some(this.copy(volume=volume*part))::((1 until ticks).toList.map(x=>None))))
+  def toTickList: List[Option[Music]] = {
+    (1 to repeat).toList.flatMap(x => pattern.flatMap(part => Some(this.copy(volume = volume * part)) :: ((1 until ticks).toList.map(x => None))))
   }
 
   def *(pattern: Pattern): Key = copy(pattern = pattern)
@@ -32,7 +33,7 @@ case class Key(
   def sharp = Key(midiNumber = midiNumber + 1, isSharp = true)
   def flat = Key(midiNumber = midiNumber - 1, isSharp = true)
   def dot = copy(ticks = (ticks * 1.5).toInt)
-    def tie(note: Key) = copy(ticks = ticks + note.ticks, tied = note.ticks)
+  def tie(note: Key) = copy(ticks = ticks + note.ticks, tied = note.ticks)
 
   def ticks(ticks: Int) = { copy(ticks = ticks) }
 
@@ -107,7 +108,8 @@ case class Key(
     8 -> (if (isSharp) "g\u266F" else if (isFlat) "a\u266D"),
     9 -> "a",
     10 -> (if (isSharp) "a\u266F" else if (isFlat) "b\u266D"),
-    11 -> "b")
+    11 -> "b"
+  )
   val octaveToString = Map(
     -1 -> ",,,,,",
     0 -> ",,,,",
@@ -119,7 +121,8 @@ case class Key(
     6 -> "\"",
     7 -> "\"'",
     8 -> "\"\"",
-    9 -> "\"\"'")
+    9 -> "\"\"'"
+  )
 
   val ticksToString = Map(
     16 -> "\u1D15D",
@@ -130,13 +133,14 @@ case class Key(
     3 -> "1/8\u00B7",
     2 -> "1/8",
     1 -> "1/16",
-    0 -> "|")
+    0 -> "|"
+  )
 
-  override def toString = if (midiNumber == 128) "|" else if (volume == 0) "-" else if(tied == 0) keynumberToString(keynumber) + octaveToString(octave) + ticksToString(ticks) else keynumberToString(keynumber) + octaveToString(octave) + ticksToString(ticks - tied) + "_" + ticksToString(tied)
+  override def toString = if (midiNumber == 128) "|" else if (volume == 0) "-" else if (tied == 0) keynumberToString(keynumber) + octaveToString(octave) + ticksToString(ticks) else keynumberToString(keynumber) + octaveToString(octave) + ticksToString(ticks - tied) + "_" + ticksToString(tied)
   override def equals(that: Any): Boolean =
     that match {
       case that: Key => (this.midiNumber == that.midiNumber) && (this.ticks == that.ticks)
-      case _         => false
+      case _ => false
     }
 }
 
