@@ -1,149 +1,89 @@
 package de.htwg.scalala.music
 
-import de.htwg.scalala.midi.MidiPlayer
-import scala.concurrent.duration._
-import scala.language.postfixOps
+import de.htwg.scalala.music.elements.Note
 
-case class Key(
-    val midiNumber: Int,
-    val isSharp: Boolean = false,
-    val isFlat: Boolean = false,
-    repeat: Int = 1,
-    pattern: Pattern = Pattern(1),
-    val tied: Int = 0,
-    ticks: Int = 4,
-    volume: Int = Context.volume
-) extends MusicElem {
-  require(0 <= midiNumber && midiNumber <= 128)
-  require(0 <= volume && volume <= 100)
+case class Key(root: Note = C, mode: ScaleType.Value = ScaleType.Major) {
 
-  def play(instrument: Instrument = Piano, volume: Int = volume): Unit = for (i <- 1 to repeat; part <- pattern) {
-    instrument.midiPlayer.play(key = midiNumber, duration = duration, volume = volume * part)
+  //  def signs(): Sign = {
+  ////    if(mode == ScaleType.Major) root = 
+  //    sign(root)
+  //  }
+
+  def sign(note: Note = root, mode: ScaleType.Value = ScaleType.Major): Sign = {
+    val s = Map(
+      (c, ScaleType.Major) -> Sign(Vector(), SignMode.Sharp),
+      (a, ScaleType.Minor) -> Sign(Vector(), SignMode.Sharp),
+
+      (g, ScaleType.Major) -> Sign(Vector(6), SignMode.Sharp),
+      (e, ScaleType.Minor) -> Sign(Vector(1), SignMode.Sharp),
+      (d, ScaleType.Major) -> Sign(Vector(6, 2), SignMode.Sharp),
+      (b, ScaleType.Minor) -> Sign(Vector(1, 5), SignMode.Sharp),
+      (a, ScaleType.Major) -> Sign(Vector(6, 2, 5), SignMode.Sharp),
+      (fis, ScaleType.Minor) -> Sign(Vector(1, 5, 0), SignMode.Sharp),
+      (e, ScaleType.Major) -> Sign(Vector(6, 2, 5, 1), SignMode.Sharp),
+      (cis, ScaleType.Minor) -> Sign(Vector(1, 5, 0, 4), SignMode.Sharp),
+      (b, ScaleType.Major) -> Sign(Vector(6, 2, 5, 1, 4), SignMode.Sharp),
+      (ais, ScaleType.Minor) -> Sign(Vector(1, 5, 0, 4, 6), SignMode.Sharp),
+      (fis, ScaleType.Major) -> Sign(Vector(6, 2, 5, 1, 4, 0), SignMode.Sharp),
+      (eis, ScaleType.Minor) -> Sign(Vector(1, 5, 0, 4, 6, 2), SignMode.Sharp),
+
+      (f, ScaleType.Major) -> Sign(Vector(3), SignMode.Flat),
+      (d, ScaleType.Minor) -> Sign(Vector(5), SignMode.Flat),
+      (b, ScaleType.Major) -> Sign(Vector(3, 0), SignMode.Flat),
+      (g, ScaleType.Minor) -> Sign(Vector(5, 2), SignMode.Flat),
+      (es, ScaleType.Major) -> Sign(Vector(3, 0, 4), SignMode.Flat),
+      (c, ScaleType.Minor) -> Sign(Vector(5, 2, 6), SignMode.Flat),
+      (as, ScaleType.Major) -> Sign(Vector(3, 0, 4, 1), SignMode.Flat),
+      (f, ScaleType.Minor) -> Sign(Vector(5, 2, 6, 3), SignMode.Flat),
+      (des, ScaleType.Major) -> Sign(Vector(3, 0, 4, 1, 5), SignMode.Flat),
+      (bes, ScaleType.Minor) -> Sign(Vector(5, 2, 6, 3, 0), SignMode.Flat),
+      (ges, ScaleType.Major) -> Sign(Vector(3, 0, 4, 1, 5, 2), SignMode.Flat),
+      (fes, ScaleType.Minor) -> Sign(Vector(5, 2, 6, 3, 0, 4), SignMode.Flat))
+
+    s(note, mode)
   }
-  def toTickList: List[Option[Music]] = {
-    (1 to repeat).toList.flatMap(x => pattern.flatMap(part => Some(this.copy(volume = volume * part)) :: ((1 until ticks).toList.map(x => None))))
+
+  val scale: Vector[Note] = {
+    var s: Vector[Note] = ScaleType.scaleVector(mode).map(i => root.copy(pitch = root.pitch + i))
+    sign(root).pos.map(i => s = s.updated(i, s(i).copy(sign = sign(root).mode)))
+    s
   }
 
-  def *(pattern: Pattern): Key = copy(pattern = pattern)
-  def *(repetitions: Int): Key = copy(repeat = repetitions)
+  val sharpSignsAt = Map(
+    1 -> List(5),
+    2 -> List(5, 0),
+    3 -> List(5, 0, 7),
+    4 -> List(5, 0, 7, 2),
+    5 -> List(5, 0, 7, 2, 9),
+    6 -> List(5, 0, 7, 2, 9, 4))
 
-  val keynumber = midiNumber % 12
-  val octave = midiNumber / 12 - 1
+  val flatSignsAt = Map(
+    1 -> List(11),
+    2 -> List(11, 4),
+    3 -> List(11, 4, 9),
+    4 -> List(11, 4, 9, 2),
+    5 -> List(11, 4, 9, 2, 7),
+    6 -> List(11, 4, 9, 2, 7, 0))
 
-  def sharp = Key(midiNumber = midiNumber + 1, isSharp = true)
-  def flat = Key(midiNumber = midiNumber - 1, isSharp = true)
-  def dot = copy(ticks = (ticks * 1.5).toInt)
-  def tie(note: Key) = copy(ticks = ticks + note.ticks, tied = note.ticks)
-
-  def ticks(ticks: Int) = { copy(ticks = ticks) }
-
-  def + = copy(midiNumber = midiNumber + 12)
-  def ++ = copy(midiNumber = midiNumber + 24)
-  def - = copy(midiNumber = midiNumber - 12)
-  def -- = copy(midiNumber = midiNumber - 24)
-
-  def soft = copy(volume = volume - Context.softDecrease)
-  def ? = soft
-  def hard = copy(volume = volume + Context.hardIncrease)
-  def ! = hard
-
-  def chord(chordQuality: ChordQuality.Value): Chord = {
-    chordQuality match {
-      case ChordQuality.Major => Chord(Set(this, majorTerz, majorQuint), name = toString.toUpperCase() + "maj")
-      case ChordQuality.Minor => Chord(Set(this, minorTerz, majorQuint), name = toString.toUpperCase() + "min")
-      case ChordQuality.Diminshed => Chord(Set(this, minorTerz, minorQuint), name = toString.toUpperCase() + "dim")
-      case ChordQuality.Augmented => Chord(Set(this, majorTerz, augmentedQuint), name = toString.toUpperCase() + "aug")
-      case ChordQuality.Seventh => Chord(Set(this, majorTerz, majorQuint, minorSetp), name = toString.toUpperCase() + "7")
-      case ChordQuality.MajorSeventh => Chord(Set(this, majorTerz, majorQuint, majorSetp), name = toString.toUpperCase() + "maj7")
-      case ChordQuality.MinorSeventh => Chord(Set(this, minorTerz, majorQuint, minorSetp), name = toString.toUpperCase() + "min7")
-    }
-  }
-  def interval(intervalQuality: IntervalQuality.Value): Interval = {
-    intervalQuality match {
-      case IntervalQuality.PerfectUnison => Interval(Set(this, copy(midiNumber = this.midiNumber + 0)))
-      case IntervalQuality.MinorSecond => Interval(Set(this, copy(midiNumber = this.midiNumber + 1)))
-      case IntervalQuality.MajorSecond => Interval(Set(this, copy(midiNumber = this.midiNumber + 2)))
-      case IntervalQuality.MinorThird => Interval(Set(this, copy(midiNumber = this.midiNumber + 3)))
-      case IntervalQuality.MajorThird => Interval(Set(this, copy(midiNumber = this.midiNumber + 4)))
-      case IntervalQuality.PerfectFourth => Interval(Set(this, copy(midiNumber = this.midiNumber + 5)))
-      case IntervalQuality.Tritone => Interval(Set(this, copy(midiNumber = this.midiNumber + 6)))
-      case IntervalQuality.PerfectFifth => Interval(Set(this, copy(midiNumber = this.midiNumber + 7)))
-      case IntervalQuality.MinorSixth => Interval(Set(this, copy(midiNumber = this.midiNumber + 8)))
-      case IntervalQuality.MajorSixth => Interval(Set(this, copy(midiNumber = this.midiNumber + 9)))
-      case IntervalQuality.MinorSeventh => Interval(Set(this, copy(midiNumber = this.midiNumber + 10)))
-      case IntervalQuality.MajorSeventh => Interval(Set(this, copy(midiNumber = this.midiNumber + 11)))
-      case IntervalQuality.PerfectOctave => Interval(Set(this, copy(midiNumber = this.midiNumber + 12)))
-      case IntervalQuality.MinorNinth => Interval(Set(this, copy(midiNumber = this.midiNumber + 13)))
-      case IntervalQuality.MajorNinth => Interval(Set(this, copy(midiNumber = this.midiNumber + 14)))
-
-    }
-  }
-  def minorTerz = copy(midiNumber = this.midiNumber + 3)
-  def majorTerz = copy(midiNumber = this.midiNumber + 4)
-  def minorQuint = copy(midiNumber = this.midiNumber + 6)
-  def majorQuint = copy(midiNumber = this.midiNumber + 7)
-  def augmentedQuint = copy(midiNumber = this.midiNumber + 8)
-  def minorSetp = copy(midiNumber = this.midiNumber + 10)
-  def majorSetp = copy(midiNumber = this.midiNumber + 11)
-  def maj: Chord = chord(ChordQuality.Major)
-  def dur: Chord = maj
-  def min: Chord = chord(ChordQuality.Minor)
-  def mol: Chord = min
-  def dim: Chord = chord(ChordQuality.Diminshed)
-  def aug: Chord = chord(ChordQuality.Augmented)
-  def maj7 = chord(ChordQuality.MajorSeventh)
-  def min7 = chord(ChordQuality.MinorSeventh)
-
-  def scale(scaleType: ScaleType.Value = ScaleType.Major) = Scale(this, scaleType)
-
-  val keynumberToString = Map(
-    0 -> "c",
-    1 -> (if (isSharp) "c\u266F" else if (isFlat) "d\u266D"),
-    2 -> "d",
-    3 -> (if (isSharp) "d\u266F" else if (isFlat) "e\u266D"),
-    4 -> "e",
-    5 -> "f",
-    6 -> (if (isSharp) "f\u266F" else if (isFlat) "g\u266D"),
-    7 -> "g",
-    8 -> (if (isSharp) "g\u266F" else if (isFlat) "a\u266D"),
-    9 -> "a",
-    10 -> (if (isSharp) "a\u266F" else if (isFlat) "b\u266D"),
-    11 -> "b"
-  )
-  val octaveToString = Map(
-    -1 -> ",,,,,",
-    0 -> ",,,,",
-    1 -> ",,,",
-    2 -> ",,",
-    3 -> ",",
-    4 -> "",
-    5 -> "'",
-    6 -> "\"",
-    7 -> "\"'",
-    8 -> "\"\"",
-    9 -> "\"\"'"
-  )
-
-  val ticksToString = Map(
-    16 -> "\u1D15D",
-    12 -> "\u00BD\u00B7",
-    8 -> "\u00BD",
-    6 -> "\u00B7",
-    4 -> "",
-    3 -> "1/8\u00B7",
-    2 -> "1/8",
-    1 -> "1/16",
-    0 -> "|"
-  )
-
-  override def toString = if (midiNumber == 128) "|" else if (volume == 0) "-" else if (tied == 0) keynumberToString(keynumber) + octaveToString(octave) + ticksToString(ticks) else keynumberToString(keynumber) + octaveToString(octave) + ticksToString(ticks - tied) + "_" + ticksToString(tied)
-  override def equals(that: Any): Boolean =
-    that match {
-      case that: Key => (this.midiNumber == that.midiNumber) && (this.ticks == that.ticks)
-      case _ => false
-    }
 }
 
-object Key {
+object ScaleType extends Enumeration {
+  val Major, Minor, Melodic, Harmonic, PentatonicMinorBlues, PentatonicMajorBlues, Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian, PentatonicMinor, PentatonicMajor = Value
 
+  val scaleVector = Map[ScaleType.Value, Vector[Int]](
+    Major -> Vector(0, 2, 4, 5, 7, 9, 11, 12),
+    Minor -> Vector(0, 2, 3, 5, 7, 8, 10, 12),
+    Melodic -> Vector(0, 2, 3, 5, 7, 9, 11, 12),
+    Harmonic -> Vector(0, 2, 3, 5, 7, 8, 11, 12),
+    PentatonicMinorBlues -> Vector(0, 3, 5, 6, 7, 10, 12),
+    PentatonicMajorBlues -> Vector(0, 2, 3, 4, 7, 9, 12),
+    Ionian -> Vector(0, 2, 4, 5, 7, 9, 11, 12),
+    Dorian -> Vector(0, 2, 3, 5, 7, 9, 10, 12),
+    Phrygian -> Vector(0, 1, 3, 5, 7, 8, 10, 12),
+    Lydian -> Vector(0, 2, 4, 6, 7, 9, 11, 12),
+    Mixolydian -> Vector(0, 2, 4, 5, 7, 9, 10, 12),
+    Aeolian -> Vector(0, 2, 3, 5, 7, 8, 10, 12),
+    Locrian -> Vector(0, 1, 3, 5, 6, 8, 10, 12),
+    PentatonicMinor -> Vector(0, 3, 5, 7, 10, 12),
+    PentatonicMajor -> Vector(0, 2, 4, 7, 9, 12))
 }

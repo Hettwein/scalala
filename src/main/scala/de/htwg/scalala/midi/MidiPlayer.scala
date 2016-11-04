@@ -1,11 +1,7 @@
-
 package de.htwg.scalala.midi
 
-import de.htwg.scalala.music.{ Key, Context }
-import scala.concurrent.duration._
-import scala.language.postfixOps
-
 import javax.sound.midi.{ MidiSystem, Synthesizer }
+import de.htwg.scalala.music.elements.Note
 
 case class MidiPlayer(instrumentID: Int = 0, channelID: Int = 0) {
 
@@ -15,29 +11,29 @@ case class MidiPlayer(instrumentID: Int = 0, channelID: Int = 0) {
   val channel = channels.apply(channelID)
   changeToInstrument(instrumentID)
 
-  def play(key: Int = 60, duration: FiniteDuration = 800 milliseconds, volume: Int = Context.volume): Unit = {
+  def play(note: Int = 60, duration: Int = 800, volume: Int = 75): Unit = {
 
-    channel.noteOn(key, volume)
-    Thread.sleep(duration.toMillis)
-    channel.noteOff(key, volume)
-  }
-  def play(set: Set[Key], volume: Int): Unit = {
-    val duration = set.head.duration
-    set.foreach { key => start(key = key.midiNumber, volume = volume) }
-    Thread.sleep(duration.toMillis)
-    set.foreach { key => stop(key.midiNumber, volume = volume) }
+    channel.noteOn(note, volume)
+    Thread.sleep(duration)
+    channel.noteOff(note, volume)
   }
 
-  def start(key: Int, volume: Int = 75): Unit = {
-    channel.noteOn(key, volume)
+  def play(notes: Vector[Note], volume: Int): Unit = {
+    val duration = notes.head.duration(notes.head.tied)
+    notes.foreach { note => start(note = note.pitch, volume = volume) }
+    Thread.sleep(duration)
+    notes.foreach { note => stop(note.pitch, volume = volume) }
   }
 
-  def stop(key: Int, volume: Int = 75): Unit = {
-    channel.noteOff(key, volume)
+  def start(note: Int, volume: Int = 75): Unit = {
+    channel.noteOn(note, volume)
+  }
+
+  def stop(note: Int, volume: Int = 75): Unit = {
+    channel.noteOff(note, volume)
   }
 
   def changeToInstrument(instrumentID: Int = 0) = {
     channel.programChange(instrumentID)
   }
-
 }

@@ -1,37 +1,36 @@
 package de.htwg.scalala.players
 
-import akka.actor._
-import de.htwg.scalala.music._
-import scala.concurrent.duration._
-import scala.language.postfixOps
-import scala.concurrent.ExecutionContext.Implicits.global
-import de.htwg.scalala.midi._
+import javax.sound.midi.MidiChannel
+import de.htwg.scalala.music.elements.Rest
+import akka.actor.Actor
+import de.htwg.scalala.music.elements.Note
+import de.htwg.scalala.music.elements.Chord
+import de.htwg.scalala.music.Music
+import akka.actor.ActorRef
+import de.htwg.scalala.music.MusicElement
+import de.htwg.scalala.music.MusicSequence
 
-case class MusicActor(instrument: Instrument) extends Actor {
-  var tickList: List[Option[Music]] = List()
+class Musician(channel: MidiChannel) extends Actor {
+
+  //  private val beatLength = 175
 
   def receive = {
-    case Tick => playNextKey
-    case PlayNow(_tickList) => tickList = _tickList
-  }
-
-  def playNextKey = {
-    if (tickList != Nil) {
-      tickList.head match {
-        case None =>
-        case Some(key: Key) => playKey(key)
-        case Some(chord: Chord) => chord.set.foreach(key => playKey(key.copy(ticks = chord.ticks, volume = chord.volume)))
-        case _ =>
-      }
-      tickList = tickList.tail
+    case Ping => sender ! Ping
+    case rest: Rest => Thread.sleep(rest.duration())
+    case note: Note => {
+      channel.noteOn(note.pitch, note.volume)
+      Thread.sleep(note.duration(note.tied))
+      channel.noteOff(note.pitch, note.volume)
     }
-
-  }
-  def playKey(key: Key) = {
-    instrument.midiPlayer.start(key.midiNumber, key.volume)
-    system.scheduler.scheduleOnce(Context.tickduration * key.ticks) { instrument.midiPlayer.stop(key.midiNumber, key.volume) }
+    case chord: Chord => {
+      val duration = chord.notes.head.duration(chord.notes.head.tied)
+      chord.notes.foreach { note => channel.noteOn(note.pitch, note.volume) }
+      Thread.sleep(duration)
+      chord.notes.foreach { note => channel.noteOff(note.pitch, note.volume) }
+    }
   }
 }
+case object Ping
 
 trait MusicPlayer {
   val actor: ActorRef
@@ -40,6 +39,12 @@ trait MusicPlayer {
 
 case class MusicPlayerImpl(musicActor: ActorRef) extends MusicPlayer {
   val actor = musicActor
-  def play(music: Music): Unit = musicActor ! PlayNow(music.toTickList)
+  def play(music: Music) = {
+    music match {
+      case element: MusicElement => musicActor ! element
+      case sequence: MusicSequence => {
+        sequence.applyKey.foreach { e => musicActor ! e }
+      }
+    }
+  }
 }
-
