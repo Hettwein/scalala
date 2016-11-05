@@ -9,6 +9,8 @@ import de.htwg.scalala.music.Music
 import akka.actor.ActorRef
 import de.htwg.scalala.music.MusicElement
 import de.htwg.scalala.music.MusicSequence
+import de.htwg.scalala.music.Measure
+import de.htwg.scalala.music.elements.TempoChange
 
 class Musician(channel: MidiChannel) extends Actor {
 
@@ -16,18 +18,19 @@ class Musician(channel: MidiChannel) extends Actor {
 
   def receive = {
     case Ping => sender ! Ping
-    case rest: Rest => Thread.sleep(rest.duration())
+    case rest: Rest => Thread.sleep((rest.duration().toDouble * Measure.tickDuration()).toLong)
     case note: Note => {
       channel.noteOn(note.pitch, note.volume)
-      Thread.sleep(note.duration(note.tied))
+      Thread.sleep((note.duration(note.getTiedDuration).toDouble * Measure.tickDuration()).toLong)
       channel.noteOff(note.pitch, note.volume)
     }
     case chord: Chord => {
-      val duration = chord.notes.head.duration(chord.notes.head.tied)
+      val duration = chord.notes.head.duration(chord.notes.head.getTiedDuration)
       chord.notes.foreach { note => channel.noteOn(note.pitch, note.volume) }
-      Thread.sleep(duration)
+      Thread.sleep((duration.toDouble * Measure.tickDuration()).toLong)
       chord.notes.foreach { note => channel.noteOff(note.pitch, note.volume) }
     }
+    case tempo: TempoChange => Measure.bpm = tempo.value
   }
 }
 case object Ping
@@ -43,7 +46,7 @@ case class MusicPlayerImpl(musicActor: ActorRef) extends MusicPlayer {
     music match {
       case element: MusicElement => musicActor ! element
       case sequence: MusicSequence => {
-        sequence.applyKey.foreach { e => musicActor ! e }
+        sequence.elements.foreach { e => musicActor ! e }
       }
     }
   }

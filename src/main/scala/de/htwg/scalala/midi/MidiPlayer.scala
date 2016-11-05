@@ -19,7 +19,7 @@ case class MidiPlayer(instrumentID: Int = 0, channelID: Int = 0) {
   }
 
   def play(notes: Vector[Note], volume: Int): Unit = {
-    val duration = notes.head.duration(notes.head.tied)
+    val duration = notes.head.duration(notes.head.getTiedDuration)
     notes.foreach { note => start(note = note.pitch, volume = volume) }
     Thread.sleep(duration)
     notes.foreach { note => stop(note.pitch, volume = volume) }

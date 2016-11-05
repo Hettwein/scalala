@@ -2,7 +2,7 @@ package de.htwg.scalala.music.elements
 
 import de.htwg.scalala.music._
 
-case class Chord(notes: Vector[Note], value: Double, volume: Int = 75, name: String = "") extends MusicElement {
+case class Chord(notes: Vector[Note], value: Int, volume: Int = 75, name: String = "") extends MusicElement {
   def play(instrument: Instrument = Piano, volume: Int = volume) = {
     instrument.midiPlayer.play(notes, volume = volume)
   }

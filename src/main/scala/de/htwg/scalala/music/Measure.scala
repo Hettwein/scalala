@@ -1,12 +1,20 @@
 package de.htwg.scalala.music
 
-case class Measure(timeSignature: TimeSignature = new TimeSignature(1, 4), keySignature: Key = new Key(C)) {
-  
-  def beats = {
+import de.htwg.scalala.music.elements.Beat
 
-  }
+case class Measure(timeSignature: TimeSignature = new TimeSignature(4, 4), keySignature: Key = new Key(C)) {
 
+  val beat = new Beat(timeSignature.nominator)
+  val beats = timeSignature.denominator
   def beatLength = {
+    beat.duration()
+  }
+}
 
+object Measure {
+  var bpm = 110.0
+  var beat = 4.0
+  def tickDuration(): Double = {
+    60000 / bpm / (96.0 / beat)
   }
 }

@@ -8,10 +8,10 @@ import de.htwg.scalala.music.elements.Interval
 case class Line(measure: Measure, elements: MusicElement*) extends MusicSequence {
 
   def applyKey = {
-    val signCount = measure.keySignature.sign().pos.size
-    val sign = measure.keySignature.sign().mode
-    var sharp = true
-    val setSigns = if (sign == SignMode.Sharp) measure.keySignature.sharpSignsAt(signCount) else if (sign == SignMode.Flat) { sharp = false; measure.keySignature.flatSignsAt(signCount) } else List()
+//    val signCount = measure.keySignature.sign().pos.size
+//    val sign = measure.keySignature.sign().mode
+//    var sharp = true
+//    val setSigns = if (sign == SignMode.Sharp) measure.keySignature.sharpSignsAt(signCount) else if (sign == SignMode.Flat) { sharp = false; measure.keySignature.flatSignsAt(signCount) } else List()
     var applied = elements
 //    elements.foreach { e =>
 //      e match {
@@ -24,8 +24,10 @@ case class Line(measure: Measure, elements: MusicElement*) extends MusicSequence
     applied
   }
 
+//  val measures
+  
   def play(instrument: Instrument = Piano, volume: Int = 75) = {
-    applyKey.foreach { e => e.play(instrument, volume) }
+    elements.foreach { e => e.play(instrument, volume) }
   }
-  override def toString: String = applyKey mkString ", "
+  override def toString: String = elements mkString ", "
 }

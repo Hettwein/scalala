@@ -6,7 +6,7 @@ import de.htwg.scalala.music.sequences._
 import de.htwg.scalala.music.elements._
 import scala.language.postfixOps
  
-object LordOfTheRingsPiano {
+object Hanayou {
 
   val LeftPiano = player(Piano, "LeftPiano")      //> Nov 04, 2016 5:35:39 PM java.util.prefs.WindowsPreferences <init>
                                                   //| WARNING: Could not open/create prefs root node Software\JavaSoft\Prefs at ro
