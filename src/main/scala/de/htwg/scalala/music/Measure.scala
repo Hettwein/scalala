@@ -7,7 +7,7 @@ case class Measure(timeSignature: TimeSignature = new TimeSignature(4, 4), keySi
   val beat = new Beat(timeSignature.nominator)
   val beats = timeSignature.denominator
   def beatLength = {
-    beat.duration()
+    beat.duration().toInt
   }
 }
 

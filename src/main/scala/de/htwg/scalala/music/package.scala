@@ -1,6 +1,7 @@
 package de.htwg.scalala
 
 import de.htwg.scalala.music.elements._
+import de.htwg.scalala.music.sequences.Line
 
 package object music {
 
@@ -20,8 +21,46 @@ package object music {
   val Clarinet = Instrument(name = "Clarinet", instrumentID = 72, channelID = 14)
   val Flute = Instrument(name = "Flute", instrumentID = 74, channelID = 15)
 
+  val DrumSet = Instrument(name = "DrumSet", instrumentID = 115, channelID = 9)
+
+  val TomLowFloor, LFT = Note(pitch = 41, value = 12)
+  val TomHighFloor, HFT = Note(43, 12)
+  val TomLow, LT = Note(45, 24)
+  val TomLowMid, LMT = Note(47, 12)
+  val TomHiMid, HMT = Note(48, 12)
+  val TomHigh, HT = Note(50, 12)
+
+  val DrumAcousticBass, ABD = Note(35, 12)
+  val DrumBass, BD = Note(36, 12)
+
+  val SnareAcoustic, AS = Note(38, 12)
+  val SnareElectric, ES = Note(40, 12)
+
+  val SideStick, ss = Note(37, 12)
+  val HandClap, hc = Note(39, 12)
+
+  val HiHatClosed, xH = Note(42, 12)
+  val HiHatPedal, pH = Note(44, 12)
+  val HiHatOpen, oH = Note(46, 12)
+
+  val CymbalCrash, CC = Note(49, 12)
+  val CymbalRide, RC = Note(51, 12)
+  val CymbalChinese, CHC = Note(52, 12)
+  val CymbalSplash, SC = Note(55, 12)
+  val CymbalCrash2, CC2 = Note(57, 12)
+  val CymbalRide2, RC2 = Note(59, 12)
+
+  val BongoHi, hBg = Note(60, 12)
+  val BongoLow, lBg = Note(61, 12)
+
+  val CongaMuteHi, xC = Note(62, 12)
+  val CongaOpenHi, oC = Note(63, 12)
+  val CongaLow, lC = Note(64, 12)
+
+  val CowBell, cb = Note(56, 12)
+      
   val t = new TempoChange(105)
-  
+
   val C, c = Note(pitch = 60)
   val D, d = Note(pitch = 62)
   val E, e = Note(pitch = 64)

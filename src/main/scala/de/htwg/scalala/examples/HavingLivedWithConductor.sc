@@ -5,17 +5,19 @@ import de.htwg.scalala.music._
 import de.htwg.scalala.music.sequences._
 import de.htwg.scalala.music.elements._
 import scala.language.postfixOps
+import akka.actor.ActorSystem
+import akka.actor.Props
 
-object HavingLived {
+object HavingLivedWithConductor {
 
 	Measure.bpm = 60
-  val LeftPiano = player(Piano, "LeftPiano")      //> Nov 06, 2016 4:01:28 PM java.util.prefs.WindowsPreferences <init>
+  val LeftPiano = player(Piano, "LeftPiano")      //> Nov 06, 2016 4:39:22 PM java.util.prefs.WindowsPreferences <init>
                                                   //| WARNING: Could not open/create prefs root node Software\JavaSoft\Prefs at ro
                                                   //| ot 0x80000002. Windows RegCreateKeyEx(...) returned error code 5.
                                                   //| LeftPiano  : de.htwg.scalala.players.MusicPlayer = Actor[akka://Orchestra/us
-                                                  //| er/LeftPianoPlayer#1106958358]
+                                                  //| er/LeftPianoPlayer#-801788231]
   val RightPiano = player(Piano, "RightPiano")    //> RightPiano  : de.htwg.scalala.players.MusicPlayer = Actor[akka://Orchestra/u
-                                                  //| ser/RightPianoPlayer#-1777919527]
+                                                  //| ser/RightPianoPlayer#-257152213]
 
   var right = Line(new Measure(),
   						g+,  e++, a+, a++, b16+, c16++, b16+, c16++,  d++, c.dot++, g++, a8+,  e++, a++, d++, a16++, g16++, e16++, d16++,
@@ -55,6 +57,19 @@ object HavingLived {
 
 
 
-  RightPiano.play(right)
-  LeftPiano.play(left)
+  //RightPiano.play(right)
+  //LeftPiano.play(left)
+  val system = ActorSystem("Orchestra")           //> system  : akka.actor.ActorSystem = akka://Orchestra
+  val Conductor = system.actorOf(Props(classOf[Conductor]), "Conductor")
+                                                  //> Conductor  : akka.actor.ActorRef = Actor[akka://Orchestra/user/Conductor#-1
+                                                  //| 78925520]
+
+  RightPiano.actor ! right
+  LeftPiano.actor ! left
+
+  Conductor ! right.measure
+  
+  Conductor ! Add(RightPiano)
+  Conductor ! Add(LeftPiano)
+  Conductor ! Start
 }

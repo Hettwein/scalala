@@ -5,6 +5,8 @@ import de.htwg.scalala.music.elements._
 import de.htwg.scalala.music.sequences._
 import de.htwg.scalala.players._
 import scala.language.postfixOps
+import akka.actor.ActorSystem
+import akka.actor.Props
 
 object Main extends App {
   var lead = Line(new Measure(), r1, r1, r1, r1,
@@ -31,14 +33,28 @@ object Main extends App {
     c2--, e2--, f2.tie(f.dot--)--, fis8--, g2--, f2--, e2.dot--, d--,
     c2--, e2--, f2.dot.tie(f6--)--, fis12--, g--, g--, r2, c6-, fis12--, g--, c--, r4)
 
-    Measure.bpm = 135
+  Measure.bpm = 115
   val Lead = player(Piano, "Lead", 0)
   val Bassline = player(Bass, "Bassline", 1)
   val Chords = player(Flute, "Chords", 2)
+  val Drum = player(DrumSet, "Drum", 9)
 
-//      Lead.play(lead)
-//      Bassline.play(bassSwing)
-//      Chords.play(chords)
+  var basic4Beat = Line(new Measure(),
+    r1, r1, r1, r1, Chord(BD, CC), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH,
+    Chord(BD, CC), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH,
+    Chord(BD, CC), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH,
+    Chord(BD, CC), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH, Chord(BD, xH), xH, Chord(AS, xH), xH)
+
+  var basic4BeatSwing = Line(new Measure(),
+    r1, r1, r1, r1, Chord(c6--, cis6-), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--,
+    Chord(c6--, cis6-), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--,
+    Chord(c6--, cis6-), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--,
+    Chord(c6--, cis6-), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c6--, fis6--), fis12--, Chord(d6--, fis6--), fis12--, Chord(c4--, d4--, cis4-), Chord(c4--, d4--, cis4-), r2, r2, a2-)
+
+  //  Drum.play(basic4Beat)
+  //  Lead.play(lead)
+  //  Bassline.play(bassSwing)
+  //  Chords.play(chords)
 
   //  var right = Line(new Measure(new TimeSignature(3, 4), new Key(f)),
   //    r4, a8, b8, d8+, c8+, c2.dot+, r4, a8, b8, d8+, c8+, c2.dot+,
@@ -70,7 +86,17 @@ object Main extends App {
     c-, Chord(g-, c), Chord(g-, c), g--, Chord(bes-, d), Chord(bes-, d), c-, Chord(g-, c), Chord(as-, c), f-, Chord(a-, c), Chord(a-, c),
     Chord(c2.dot-, bes2.dot-, e.dot-))
 
-    Measure.bpm = 80
-  RightPiano.play(right)
-  LeftPiano.play(left)
+  val system = ActorSystem("Orchestra")
+  val Conductor = system.actorOf(Props(classOf[Conductor]), "Conductor")
+  Drum.actor ! basic4BeatSwing
+  Lead.actor ! lead
+  Chords.actor ! chords
+  Bassline.actor ! bassSwing
+  Conductor ! lead.measure
+  Conductor ! Add(Drum)
+  Conductor ! Add(Lead)
+  //  Conductor ! Add(Chords)
+  Conductor ! Add(Bassline)
+  Conductor ! Start
+  //  println(basic4Beat.toTickList())
 }

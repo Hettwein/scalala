@@ -40,7 +40,7 @@ package object players {
   val ClarinetPlayer = player(Clarinet)
   val FlutePlayer = player(Flute)
 
-//  val DrumPlayer = player(Drum)
+  val DrumPlayer = player(DrumSet)
 
 //  val Conductor = system.actorOf(Props(classOf[Conductor]), "Conductor")
 }
